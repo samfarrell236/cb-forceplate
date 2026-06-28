@@ -20,7 +20,8 @@ def render(sctx):
     C.section_label("database", "Data source")
     st.caption("Your dataset is saved locally and loads automatically each visit. "
                "Add exports any time — they are merged and de-duplicated.")
-    uploads = st.file_uploader("Add VALD ForceDecks CSV export(s)", type="csv",
+    uploads = st.file_uploader("Add VALD ForceDecks export(s) — CSV or Excel",
+                               type=["csv", "xlsx", "xls"],
                                accept_multiple_files=True, key="set_uploader")
     if uploads:
         n = store.save(uploads, st.session_state.setdefault("_saved_uploads", set()))

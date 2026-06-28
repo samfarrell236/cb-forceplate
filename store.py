@@ -35,14 +35,26 @@ def signature(paths) -> tuple:
 
 
 def save(uploads, seen: set) -> int:
-    """Persist newly uploaded exports. `seen` tracks (name,size) already saved."""
+    """Persist newly uploaded exports. `seen` tracks (name,size) already saved.
+
+    Excel exports (.xlsx/.xls) are converted to CSV on the way in so the rest of
+    the pipeline only ever deals with CSV.
+    """
     STORE.mkdir(parents=True, exist_ok=True)
     saved = 0
     for uf in uploads:
         key = (uf.name, uf.size)
         if key in seen:
             continue
-        (STORE / Path(uf.name).name).write_bytes(uf.getbuffer())
+        name = Path(uf.name).name
+        if name.lower().endswith((".xlsx", ".xls")):
+            import io
+            import pandas as pd
+            df = pd.read_excel(io.BytesIO(uf.getbuffer()), dtype=str)
+            (STORE / (Path(name).stem + ".csv")).write_text(
+                df.to_csv(index=False), encoding="utf-8-sig")
+        else:
+            (STORE / name).write_bytes(uf.getbuffer())
         seen.add(key)
         saved += 1
     return saved
